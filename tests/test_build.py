@@ -1,19 +1,16 @@
 import os
 import sys
-import pytest
-from click.testing import CliRunner
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from geojson2kml.cli import main
+from geojson2kml.buildkml import convert_file
 
 
-@pytest.fixture
-def runner():
-    return CliRunner()
+def test_file_output():
+    test_file = "examples/example1.geojson"
+    outdir = "examples"
+    output_path = convert_file(test_file, outdir)
 
-
-def test_cli(runner):
-    result = runner.invoke(main, ["--version"])
-    assert result.exit_code == 0
-    assert not result.exception
-    assert "geojson2kml" in result.output.strip()
+    with open(output_path, "r") as f:
+        data = f.read()
+    assert "<kml xmlns=" in data
+    assert "</kml>" in data

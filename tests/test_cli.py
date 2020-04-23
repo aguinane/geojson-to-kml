@@ -12,7 +12,7 @@ def runner():
     return CliRunner()
 
 
-def test_cli(runner):
+def test_cli_version(runner):
     result = runner.invoke(main, ["--version"])
     assert result.exit_code == 0
     assert not result.exception
