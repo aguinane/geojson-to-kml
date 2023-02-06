@@ -1,10 +1,7 @@
-import os
-import sys
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from geojson2kml.cli import main
+from geojson2kml.cli import app
 
 
 @pytest.fixture
@@ -12,14 +9,7 @@ def runner():
     return CliRunner()
 
 
-def test_cli_version(runner):
-    result = runner.invoke(main, ["--version"])
-    assert result.exit_code == 0
-    assert not result.exception
-    assert "geojson2kml" in result.output.strip()
-
-
-def test_cli(runner):
-    result = runner.invoke(main, ["examples/example1.geojson", "--outdir", "examples"])
+def test_cli_convert(runner):
+    result = runner.invoke(app, ["examples/example1.geojson", "--outdir", "examples"])
     assert result.exit_code == 0
     assert not result.exception

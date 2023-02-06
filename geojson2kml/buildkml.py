@@ -1,21 +1,21 @@
 import logging
 from pathlib import Path
+from typing import Iterable, List, Tuple
+
 import geojson
 import simplekml
-from typing import List, Tuple, Iterable
 
 log = logging.getLogger(__name__)
 
 
 def import_geojson(file_path):
-    """ Get geojson object
-    """
+    """Get geojson object"""
     with open(file_path) as f:
         return geojson.load(f)
 
 
 def convert_coords(coords: List[List[float]]) -> List[Tuple[float, float]]:
-    """ Change coords to tuples """
+    """Change coords to tuples"""
     if type(coords[0]) == float:
         # Single point
         return [parse_coords(coords)]
@@ -30,7 +30,7 @@ def convert_coords(coords: List[List[float]]) -> List[Tuple[float, float]]:
 
 
 def parse_coords(coords: Iterable[float]) -> Tuple[float, float, float]:
-    """ Change coords to tuple """
+    """Change coords to tuple"""
     lon = coords[0]
     lat = coords[1]
     try:
@@ -83,7 +83,7 @@ def build_kml(geojson: dict, output_path="out.kml"):
 
 
 def get_popup_table(properties: dict) -> str:
-    """ Convert any additional columns into a HTML table """
+    """Convert any additional columns into a HTML table"""
     special = [
         "name",
         "iconstyle.icon.href",

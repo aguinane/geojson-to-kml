@@ -1,9 +1,3 @@
-"""
-    geojson2kml.__main__
-    ~~~~~
-"""
+from geojson2kml.cli import main
 
-if __name__ == "__main__":
-    from geojson2kml.cli import main
-
-    main()
+main()
