@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from collections.abc import Iterable
 
 import geojson
 import simplekml
@@ -14,7 +14,7 @@ def import_geojson(file_path):
         return geojson.load(f)
 
 
-def convert_coords(coords: List[List[float]]) -> List[Tuple[float, float]]:
+def convert_coords(coords: list[list[float]]) -> list[tuple[float, float]]:
     """Change coords to tuples"""
     if type(coords[0]) == float:
         # Single point
@@ -29,7 +29,7 @@ def convert_coords(coords: List[List[float]]) -> List[Tuple[float, float]]:
     return new_coords
 
 
-def parse_coords(coords: Iterable[float]) -> Tuple[float, float, float]:
+def parse_coords(coords: Iterable[float]) -> tuple[float, float, float]:
     """Change coords to tuple"""
     lon = coords[0]
     lat = coords[1]
