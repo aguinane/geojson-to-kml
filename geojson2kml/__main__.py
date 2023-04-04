@@ -1,3 +1,3 @@
-from geojson2kml.cli import main
+from geojson2kml.cli import app
 
-main()
+app()

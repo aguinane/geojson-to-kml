@@ -1,11 +1,16 @@
 import logging
-from pathlib import Path
 from collections.abc import Iterable
+from pathlib import Path
 
 import geojson
 import simplekml
 
 log = logging.getLogger(__name__)
+
+DEFAULT_ICON = "http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png"
+DEFAULT_COLOR = "FFFFFFFF"
+DEFAULT_SCALE = 1.0
+DEFAULT_WIDTH = 5.0
 
 
 def import_geojson(file_path):
@@ -40,45 +45,93 @@ def parse_coords(coords: Iterable[float]) -> tuple[float, float, float]:
     return lon, lat, alt
 
 
-def build_kml(geojson: dict, output_path="out.kml"):
-    kml = simplekml.Kml()
+def build_kml(
+    geojson: dict, output_path="", folder_attribute: str = "", zip: bool = False
+):
     try:
         features = geojson["features"]
     except KeyError:
         features = [geojson]
+
+    if not output_path:
+        output_path = "out.kmz" if zip else "out.kml"
+
+    # Get list of unique folders
+    folders = []
+    if folder_attribute:
+        for feature in features:
+            properties = feature["properties"]
+            folder_name = properties.get(folder_attribute, None)
+            if folder_name:
+                folders.append(folder_name)
+    folders = sorted(list(set(folders)))
+
+    # Build KML tree
+    kml = simplekml.Kml()
+    targets = {}
+    if folders:
+        for folder in folders:
+            fol = kml.newfolder(name=folder)
+            targets[folder] = fol
+
+    # Add features
     for feature in features:
-        feature_id = feature.get("id", None)
-        feature_name = feature.get("name", str(feature_id))
         geometry = feature["geometry"]
         properties = feature["properties"]
+
+        # Get the feature name
+        feature_id = feature.get("id", None)
+        feature_name = feature.get("name", None)
+        if not feature_name:
+            feature_name = properties.get("name", None)
+        if not feature_name:
+            feature_name = feature_id
+        feature_name = str(feature_name)
+
         desc = get_popup_table(properties)
         coords = convert_coords(geometry["coordinates"])
+
+        if folder_attribute:
+            folder_name = properties.get(folder_attribute, None)
+            if folder_name:
+                target = targets[folder_name]
+            else:
+                target = kml
+        else:
+            target = kml
+
         if geometry["type"] == "Point":
-            pnt = kml.newpoint(name=str(feature_id), coords=coords, description=desc)
+            pnt = target.newpoint(name=feature_name, coords=coords, description=desc)
             pnt.style.iconstyle.icon.href = properties.get(
                 "iconstyle.icon.href",
-                "https://maps.google.com/mapfiles/kml/paddle/red-circle.png",
+                DEFAULT_ICON,
             )
-            pnt.style.iconstyle.color = properties.get("iconstyle.color", "ffff0000")
-            pnt.style.iconstyle.scale = properties.get("iconstyle.scale", 1.0)
-            pnt.style.labelstyle.scale = properties.get("labelstyle.scale", 1.0)
+            pnt.style.iconstyle.color = properties.get("iconstyle.color", DEFAULT_COLOR)
+            pnt.style.iconstyle.scale = properties.get("iconstyle.scale", DEFAULT_SCALE)
+            pnt.style.labelstyle.scale = properties.get(
+                "labelstyle.scale", DEFAULT_SCALE
+            )
         elif geometry["type"] == "LineString":
-            ls = kml.newlinestring(name=feature_name, description=desc)
+            ls = target.newlinestring(name=feature_name, description=desc)
             ls.coords = coords
             ls.extrude = 1
             ls.altitudemode = simplekml.AltitudeMode.relativetoground
-            ls.style.linestyle.color = properties.get("linestyle.color", "ffff0000")
-            ls.style.linestyle.width = properties.get("linestyle.width", 5)
+            ls.style.linestyle.color = properties.get("linestyle.color", DEFAULT_COLOR)
+            ls.style.linestyle.width = properties.get("linestyle.width", DEFAULT_WIDTH)
         elif geometry["type"] == "Polygon":
-            pol = kml.newpolygon(name=feature_name, description=desc)
+            pol = target.newpolygon(name=feature_name, description=desc)
             pol.outerboundaryis = coords
-            pol.style.linestyle.color = properties.get("linestyle.color", "ffff0000")
-            pol.style.linestyle.width = properties.get("linestyle.width", 5)
-            pol.style.polystyle.color = properties.get("polystyle.color", "ffff0000")
+            pol.style.linestyle.color = properties.get("linestyle.color", DEFAULT_COLOR)
+
+            pol.style.linestyle.width = properties.get("linestyle.width", DEFAULT_WIDTH)
+            pol.style.polystyle.color = properties.get("polystyle.color", DEFAULT_COLOR)
         else:
             log.warning("Geometry type %s not supported", geometry["type"])
 
-    kml.save(output_path)
+    if zip:
+        kml.savekmz(output_path)
+    else:
+        kml.save(output_path)
     log.info("Created %s", output_path)
 
 
@@ -100,14 +153,21 @@ def get_popup_table(properties: dict) -> str:
     html = ""
     for key in properties.keys():
         value = properties[key]
+
+        if isinstance(value, str) and value[0:4] == "http":
+            value = f'<a href="{value}">{value}</a>'
+
         row = f"<dt>{key}</dt><dd>{value}</dd>"
         html += row
     return html
 
 
-def convert_file(geojsonfile, outdir):
+def convert_file(geojsonfile, outdir, folder_attribute: str = "", zip: bool = False):
     geojson = import_geojson(geojsonfile)
     stem = Path(geojsonfile).stem
-    output_path = Path(outdir) / f"{stem}.kml"
-    build_kml(geojson, output_path)
+    if zip:
+        output_path = Path(outdir) / f"{stem}.kmz"
+    else:
+        output_path = Path(outdir) / f"{stem}.kml"
+    build_kml(geojson, output_path, folder_attribute, zip=zip)
     return output_path
