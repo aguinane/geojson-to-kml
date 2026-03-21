@@ -16,7 +16,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 keywords = ["geojson", "KML"]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dynamic = ["version", "description"]
 dependencies = ["typer", "simplekml", "geojson"]
 
@@ -45,4 +45,4 @@ fail_under = 90
 
 [tool.ruff.lint]
 select = ["A", "B", "E", "F", "I", "N", "PERF", "RUF", "SIM", "UP"]
-ignore = ["A002"]
+ignore = ["A002", "B008"]

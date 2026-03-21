@@ -30,7 +30,7 @@ def convert_coords(coords: list[list[float]]) -> list[tuple[float, float]]:
             new_coords.append(parse_coords(item))
         else:
             for subitem in item:
-                new_coords.append(parse_coords(subitem))
+                new_coords.append(parse_coords(subitem)) # noqa: PERF401
     return new_coords
 
 
