@@ -21,12 +21,12 @@ def import_geojson(file_path):
 
 def convert_coords(coords: list[list[float]]) -> list[tuple[float, float]]:
     """Change coords to tuples"""
-    if type(coords[0]) == float:
+    if isinstance(coords[0], float):
         # Single point
         return [parse_coords(coords)]
     new_coords = []
     for item in coords:
-        if type(item[0]) == float:
+        if isinstance(item[0], float):
             new_coords.append(parse_coords(item))
         else:
             for subitem in item:
@@ -93,10 +93,7 @@ def build_kml(
 
         if folder_attribute:
             folder_name = properties.get(folder_attribute, None)
-            if folder_name:
-                target = targets[folder_name]
-            else:
-                target = kml
+            target = targets[folder_name] if folder_name else kml
         else:
             target = kml
 
@@ -148,10 +145,9 @@ def get_popup_table(properties: dict) -> str:
         "polystyle.color",
     ]
     for key in special:
-        if key in properties:
-            del properties[key]
+        properties.pop(key, None)
     html = ""
-    for key in properties.keys():
+    for key in properties:
         value = properties[key]
 
         if isinstance(value, str) and value[0:4] == "http":
@@ -165,9 +161,7 @@ def get_popup_table(properties: dict) -> str:
 def convert_file(geojsonfile, outdir, folder_attribute: str = "", zip: bool = False):
     geojson = import_geojson(geojsonfile)
     stem = Path(geojsonfile).stem
-    if zip:
-        output_path = Path(outdir) / f"{stem}.kmz"
-    else:
-        output_path = Path(outdir) / f"{stem}.kml"
+    file_name = f"{stem}.kmz" if zip else f"{stem}.kml"
+    output_path = Path(outdir) / file_name
     build_kml(geojson, output_path, folder_attribute, zip=zip)
     return output_path
